@@ -1,4 +1,4 @@
-from get_data_victor import get_data_combined_exch_concurrent
+from get_data import get_data_combined_exch_concurrent
 
 """
 If trade data is needed, change the parameter: data_type to trades.
