@@ -1,5 +1,9 @@
 from get_data_victor import get_data_combined_exch_concurrent
 
+"""
+If trade data is needed, change the parameter: data_type to trades.
+if OHLCV VWAP data needed, change it to count_ohlcv_vwap.
+"""
 
 if __name__ == '__main__':
     start = '2022-10-01T00:00:00.000Z'
