@@ -23,12 +23,13 @@ def get_data_single_exch(exch=None, pair=None, start_date=None, end_date=None, d
     For assetprice, the return result will not include any exchanges
     :param exch:
     :param pair:
-    :param start_date:
+    :param start_date: in string format
     :param end_date:
     :param data_type:
     :param interval:
     :return:
     """
+    # ------------------------------------------------------------------------------------------------------------------
     if data_type == "count_ohlcv_vwap":
         URL = f'https://us.market-api.kaiko.io/v2/data/trades.v1/exchanges/{exch}/spot/{pair}/aggregations/'\
               f'count_ohlcv_vwap?interval={interval}&start_time={start_date}&end_time={end_date}&page_size=10000'
@@ -43,23 +44,29 @@ def get_data_single_exch(exch=None, pair=None, start_date=None, end_date=None, d
             quote = pair.split('-')[1]
         if pair == 'usd':
             raise ValueError("Please input Base! Not quote")
-        URL = f'https://us.market-api.kaiko.io/v2/data/trades.v1/spot_direct_exchange_rate/{base}/{quote}?'\
+        URL = f'https://us.market-api.kaiko.io/v1/data/trades.v1/spot_direct_exchange_rate/{base}/{quote}?'\
               f'start_time={start_date}&end_time={end_date}&interval={interval}&page_size=1000'
+
+    else:
+        raise ValueError("Please input correct data type!")
+    # ------------------------------------------------------------------------------------------------------------------
 
     try:
         res = requests.get(URL, headers=headers, stream=True).json()
         temp_df2 = pd.DataFrame(res["data"])
         temp_df2['pair'] = pair
+
         if data_type != "assetprice":
             temp_df2['exchange'] = exch
 
         while "next_url" in res.keys():
             res = requests.get(res["next_url"], headers=headers, stream=True).json()
-            temp_df2 = pd.DataFrame(res["data"])
-            temp_df2['pair'] = pair
+            temp_df3 = pd.DataFrame(res["data"])
+            temp_df3['pair'] = pair
 
             if data_type != "assetprice":
-                temp_df2['exchange'] = exch
+                temp_df3['exchange'] = exch
+            temp_df2 = pd.concat([temp_df2, temp_df3], ignore_index=True)
     except:
         temp_df2 = pd.DataFrame()
         print('no data for this instrument ' + str(pair) + str(exch))
@@ -68,6 +75,9 @@ def get_data_single_exch(exch=None, pair=None, start_date=None, end_date=None, d
 
 def get_data_single_exch_concurrent(exches=None, pair=None, start_date=None, end_date=None, interval=None,
                                     data_type=None, max_workers=20):
+    """
+    This one is using concurrent for getting data from multiple exchanges
+    """
     temp = pd.DataFrame()
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         if data_type == 'assetprice':
@@ -104,6 +114,7 @@ def get_data_combined_exch_concurrent(exches=None, pairs=None, start_dates=None,
                                      repeat(start_dates),
                                      repeat(end_dates), repeat(intervals), repeat(data_type),
                                      repeat(max_workers_thread)), total=len(pairs)))
+
         else:
             res = list(tqdm(pool.map(get_data_single_exch_concurrent, exches, pairs, repeat(start_dates),
                                      repeat(end_dates), repeat(intervals), repeat(data_type),

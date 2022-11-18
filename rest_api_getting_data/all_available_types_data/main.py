@@ -1,4 +1,9 @@
+import datetime
+
 from get_data import get_data_combined_exch_concurrent, get_data_single_exch
+from rest_api_getting_data.all_available_types_data.get_lending_borrowing_protocols_data import \
+    get_multiple_exches_concurrent
+
 
 """
 If trade data is needed, change the parameter: data_type to trades.
@@ -48,9 +53,23 @@ def get_assetprice():
     print(b)
 
 
+def get_lending_borrowing_protocols():
+    start = datetime.datetime(2022, 9, 1)
+    end = datetime.datetime(2022, 10, 1)
+
+    exches = ['cmpd', 'aav2']
+    start_list = [start for exch in exches]
+    end_list = [end for exch in exches]
+
+    res = get_multiple_exches_concurrent(exches=exches, start_dates=start_list, end_dates=end_list,
+                                         max_workers_process=50,
+                                         max_workers_thread=5)
+    print(res.head())
+
+
 if __name__ == '__main__':
     # get_ohlcv()
     # get_assetprice()
+    # get_lending_borrowing_protocols()
 
-    print(get_data_single_exch(exch=None, pair='btc-usd', start_date='2022-04-01T00:00:00.000Z',
-                               end_date='2022-10-01T00:00:00.000Z', data_type='assetprice', interval='1h'))
+    get_lending_borrowing_protocols()
